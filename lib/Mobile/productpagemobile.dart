@@ -27,7 +27,7 @@ class ProductPageMobile extends StatelessWidget {
                 fontSize: 22,
                 fontWeight: FontWeight.bold),
           ),
-          //ProductPageMobile()
+          
           ProductCardMobile()
         ],
       )),
