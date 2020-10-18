@@ -1,7 +1,7 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:tribus/constants.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class JoinPageMobile extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
@@ -70,24 +70,23 @@ class JoinFormMobile extends StatefulWidget {
   const JoinFormMobile({
     Key key,
     @required GlobalKey<FormState> formKey,
-  })  : _formKey = formKey,
-        super(key: key);
-
-  final GlobalKey<FormState> _formKey;
+  }) : super(key: key);
 
   @override
   _JoinFormMobileState createState() => _JoinFormMobileState();
 }
 
 class _JoinFormMobileState extends State<JoinFormMobile> {
-  final _resumeController = TextEditingController();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  FilePickerResult result;
-  String filename = 'No file selected';
+  final _githubController = TextEditingController();
+  final _linkedinController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
   @override
   void dispose() {
-    _resumeController.dispose();
+    _githubController.dispose();
+    _linkedinController.dispose();
     _emailController.dispose();
     _nameController.dispose();
     super.dispose();
@@ -102,13 +101,11 @@ class _JoinFormMobileState extends State<JoinFormMobile> {
         padding: const EdgeInsets.all(14.0),
         height: MediaQuery.of(context).size.height / 1.5,
         child: Form(
-          key: widget._formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          key: _formKey,
+          child: ListView(
               children: [
                 TextFormField(
+                  controller: _nameController,
                   autofocus: true,
                   validator: (value) {
                     if (value.isEmpty)
@@ -129,6 +126,7 @@ class _JoinFormMobileState extends State<JoinFormMobile> {
                 ),
                 SizedBox(height: 20),
                 TextFormField(
+                  controller: _emailController,
                   validator: (value) {
                     bool emailValid = RegExp(
                             r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?)*$")
@@ -152,150 +150,119 @@ class _JoinFormMobileState extends State<JoinFormMobile> {
                   ),
                 ),
                 SizedBox(height: 20),
-                Expanded(
-                  child: TextField(
-                    controller: _resumeController,
-                    readOnly: true,
-                    style: TextStyle(fontSize: 16, color: kBlueColor),
-                    cursorColor: Colors.black,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.all(12.0),
-                      labelText: 'Upload Resume',
-                      hintText: 'Choose file',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                TextFormField(
+                  controller: _githubController,
+                  validator: (value) {
+                    bool githubValid =
+                        RegExp(r"^https:\/\/github\.com\/[a-zA-Z]-?[a-zA-Z]")
+                            .hasMatch(value);
+                    if (value.isEmpty)
+                      return '*Please Enter Your GitHub Profile URL';
+                    else if (!githubValid) return '*Enter a Valid GitHub URL';
+                    return null;
+                  },
+                  style: TextStyle(fontSize: 16, color: kBlueColor),
+                  cursorColor: Colors.black,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.all(12.0),
+                    labelText: 'GitHub URL',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(11.0),
+                      child: FaIcon(FontAwesomeIcons.github),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextFormField(
+                  validator: (value) {
+                    bool linkedinValid = RegExp(
+                            r"((http(s?)://)*([a-zA-Z0-9\-])*\.|[linkedin])[linkedin/~\-]+\.[a-zA-Z0-9/~\-_,&=\?\.;]+[^\.,\s<]")
+                        .hasMatch(value);
+                    if (value.isNotEmpty) {
+                      if (!linkedinValid) {
+                        return '*Enter a Valid LinkedIn profile URL';
+                      }
+                    }
+                    return null;
+                  },
+                  controller: _linkedinController,
+                  style: TextStyle(fontSize: 16, color: kBlueColor),
+                  cursorColor: Colors.black,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.all(12.0),
+                    labelText: 'LinkedIn URL (optional)',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.all(11.0),
+                      child: FaIcon(FontAwesomeIcons.linkedin),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20,),
+                MaterialButton(
+                    height: 48,
+                    color: kBlueColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 12.0),
+                      child: Text(
+                        'Submit',
+                        style: TextStyle(
+                            color: kWhiteColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
                       ),
-                      prefixIcon: Icon(Icons.file_copy),
                     ),
-                  ),
-                ),
-                Text(
-                  filename.split('/').last,
-                  textScaleFactor: 1.5,
-                  style: TextStyle(color: kBlueColor),
-                ),
-                SizedBox(width: 20),
-                Spacer(),
-                MaterialButton(
-                  height: 48,
-                  color: kBlueColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 12.0),
-                    child: Text(
-                      'Choose File',
-                      style: TextStyle(
-                          color: kWhiteColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  onPressed: () async {
-                    result = await FilePicker.platform.pickFiles();
-                    if (result != null) {
-                      setState(() => filename = result.files.single.name);
-                    }
-                  },
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                MaterialButton(
-                  height: 48,
-                  color: kBlueColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 12.0),
-                    child: Text(
-                      'Submit',
-                      style: TextStyle(
-                          color: kWhiteColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  onPressed: () {
-                    if (filename == 'No file selected.' ||
-                        _nameController.value == null ||
-                        _emailController.value == null) {
-                      showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return Dialog(
-                              child: Container(
-                                height: MediaQuery.of(context).size.height / 5,
-                                width: MediaQuery.of(context).size.width / 5,
-                                child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                          'Some fields are empty.',
-                                          textScaleFactor: 1.2,
-                                        ),
-                                      ),
-                                      MaterialButton(
-                                        textColor: Colors.white,
-                                        color: kBlueColor,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        onPressed: () => Navigator.pop(context),
-                                        child: Text('OK'),
-                                      ),
-                                    ]),
-                              ),
-                            );
-                          });
-                    } else if (filename.contains('.pdf') ||
-                        filename.contains('.doc') ||
-                        filename.contains('.docx')) {
-                      // mail code here.
-                      launch(
-                          'mailto:tribustechsolutions@gmail.com?subject=Resume');
-                    } else {
-                      showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return Dialog(
-                              child: Container(
-                                height: MediaQuery.of(context).size.height / 5,
-                                width: MediaQuery.of(context).size.width / 5,
-                                child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text(
-                                          'Only pdf/doc/docx allowed.',
-                                          textScaleFactor: 1.2,
-                                        ),
-                                      ),
-                                      MaterialButton(
-                                        textColor: Colors.white,
-                                        color: kBlueColor,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        onPressed: () => Navigator.pop(context),
-                                        child: Text('OK'),
-                                      ),
-                                    ]),
-                              ),
-                            );
-                          });
-                    }
-                  },
-                ),
+                    onPressed: () async {
+                      if (_formKey.currentState.validate()) {
+                        FirebaseFirestore.instance
+                            .collection('Profiles')
+                            .doc()
+                            .set({
+                          'Email': _emailController.text,
+                          'Full Name': _nameController.text,
+                          'GitHub': _githubController.text,
+                          'LinkedIn': _linkedinController.text
+                        });
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return Dialog(
+                                child: Container(
+                                  height:
+                                      MediaQuery.of(context).size.height / 5,
+                                  width: MediaQuery.of(context).size.width / 5,
+                                  child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                            'Your application has been submitted.\nWe will get back to you shortly.'),
+                                        MaterialButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text(
+                                            'OKAY',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          color: kBlueColor,
+                                        )
+                                      ]),
+                                ),
+                              );
+                            });
+                      }
+                    }),
               ]),
         ),
       ),
